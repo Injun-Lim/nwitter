@@ -5,6 +5,7 @@ import { getAuth } from "firebase/auth";
 // import "firebase/compat/storage";
 //import "firebase/firestore" 대신
 import { getFirestore } from "firebase/firestore";
+import { getStorage, ref } from "firebase/storage";
 
 const firebaseConfig = {
   apiKey: process.env.REACT_APP_API_KEY,
@@ -23,6 +24,8 @@ export const authService = getAuth();
 
 //export const dbService = firebase.firestore(); 대신
 export const dbService = getFirestore();
+
+export const storageService = getStorage();
 /* .env
 REACT_APP_API_KEY ="AIzaSyDX0lYWnT9EvLLE8l1bhigrCMXGivzlzlg"
 REACT_APP_AUTH_DOMAIN ="nwitter-7247d.firebaseapp.com"
