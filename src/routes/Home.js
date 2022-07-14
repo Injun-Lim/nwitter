@@ -8,14 +8,15 @@ import {
   orderBy,
 } from "firebase/firestore";
 import { v4 as uuidv4 } from "uuid";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { dbService, storageService } from "./../fBase";
-import { ref } from "firebase/storage";
+import { ref, uploadString, getDownloadURL } from "firebase/storage";
 
 const Home = ({ userObj }) => {
   const [nweet, setNweet] = useState("");
   const [nweets, setNweets] = useState([]);
-  const [attachment, setAttachment] = useState();
+  const [attachment, setAttachment] = useState("");
+  const fileInput = useRef();
 
   //forEach 사용 방법, useEffect에서 호출
   // const getNweets = async () => {
@@ -53,21 +54,29 @@ const Home = ({ userObj }) => {
 
   const onSubmit = async (event) => {
     event.preventDefault();
-    const fileRef = ref(storageService, `${userObj.uid}/${uuidv4()}`);
-    const response = await fileRef.putString(attachment, "data_url");
-    console.log(response);
+    let fileUrl = "";
+    if (attachment !== "") {
+      const fileRef = ref(storageService, `${userObj.uid}/${uuidv4()}`);
+      const response = await uploadString(fileRef, attachment, "data_url");
+      fileUrl = await getDownloadURL(response.ref);
+    }
 
     await addDoc(collection(dbService, "nweets"), {
       text: nweet,
       createdAt: Date.now(),
       creatorId: userObj.uid,
+      attachmentUrl: fileUrl,
     });
+
     setNweet("");
+    fileInput.current.value = ""; //useRef에서 선언한 부분
+    setAttachment("");
   };
   const onChange = (event) => {
     setNweet(event.target.value);
   };
   const onChangeFile = (event) => {
+    setAttachment("");
     const theFile = event.target.files[0];
     // console.log(theFile);
     const reader = new FileReader();
@@ -77,7 +86,8 @@ const Home = ({ userObj }) => {
     reader.readAsDataURL(theFile);
   };
   const onClearAttachmentClick = () => {
-    setAttachment(null);
+    fileInput.current.value = ""; //useRef에서 선언한 부분
+    setAttachment("");
   };
 
   return (
@@ -90,7 +100,12 @@ const Home = ({ userObj }) => {
           placeholder="What's on your mind?"
           maxLength={120}
         />
-        <input type="file" accept="image/*" onChange={onChangeFile} />
+        <input
+          type="file"
+          accept="image/*"
+          onChange={onChangeFile}
+          ref={fileInput}
+        />
         <input type="submit" value="Nweet" onClick={onSubmit} />
         {attachment ? (
           <div>
